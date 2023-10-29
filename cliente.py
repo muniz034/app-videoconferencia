@@ -9,13 +9,16 @@ class NO_Cliente:
         self.nome = nome
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(180.0)
-        #self.socket.bind((self.IP, self.porta))
         #self.socket.listen()
         self.conexoes = []
     
     def add_porta(self, porta):
         self.portas.append(porta)
-        print(f'Porta {porta} adicionada com sucesso!')         
+        print(f'Porta {porta} adicionada com sucesso!')  
+        
+    def remover_porta(self, porta):
+        self.portas.remove(porta)
+        print(f'Porta {porta} removida com sucesso!')         
     
     def conectar_servidor(self, servidor_IP, servidor_porta):
         try:
@@ -48,7 +51,7 @@ class NO_Cliente:
             conexao = self.socket
             if(conexao.getpeername() == (IP,porta)):
                 conexao.close()
-                self.portas.append(porta)
+                self.add_porta(conexao.getsockname()[1])
             else:
                 lista.append(conexao)
         lista.reverse()
@@ -58,7 +61,9 @@ class NO_Cliente:
     def desconectar(self):
         while(self.conexoes != []):
             conexao = self.conexoes.pop()
+            conexao = self.socket
             conexao.close()
+            self.add_porta(conexao.getsockname()[1])
         self.socket.close()
     
     def search_portas(self,cliente_nome):
@@ -75,8 +80,7 @@ p.bind(('192.168.1.9', 30045))
 p.listen()
 
 cliente.conectar_servidor('192.168.1.9', 30045)
-p.close()
-cliente.desconectar_conexao('servidor')
+#cliente.desconectar_conexao('servidor')
 cliente.desconectar()
 p.close()
 
