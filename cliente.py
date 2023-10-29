@@ -31,6 +31,9 @@ class NO_Cliente:
         except socket.error as e:
             print(f'Conexão mal-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
             print(f'Erro encontrado: {e}')
+        except IndexError as e:
+            print(f'Conexão mal-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
+            print(f'Erro encontrado: Nenhuma porta disponível')
             
     def conectar_cliente(self, NO_IP, NO_porta):
         try:
@@ -42,6 +45,9 @@ class NO_Cliente:
         except socket.error as e:
             print(f'Conexão mal-sucedida com IP: {NO_IP} | porta: {NO_porta}')
             print(f'Erro encontrado: {e}')
+        except IndexError as e:
+            print(f'Conexão mal-sucedida com IP: {NO_IP} | porta: {NO_porta}')
+            print(f'Erro encontrado: Nenhuma porta disponível')
      
     #fecha 1 socket de cliente       
     def desconectar_cliente(self, nome):
