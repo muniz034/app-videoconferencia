@@ -1,7 +1,3 @@
-#A atividade prática da disciplina consiste em desenvolver uma aplicação de videoconferência descentralizada. 
-#Para isso, deve ser utilizada comunicação por sockets, permitindo que os usuários primeiro se registrem em um servidor e 
-#consultem a lista de nós cadastrados, para depois de conectarem aos seus pares utilizando o modelo Peer-to-Peer (P2P).
-
 #O socket cliente deve:
 #Registrar-se no servidor utilizando um nome e um IP exclusivos e indicando a porta apta para receber o pedido de chamada;
 #Realizar consultas de endereços de portas por nomes específicos dos usuários;
@@ -19,12 +15,9 @@ import threading
 
 class NO_Cliente:
     def __init__(self, IP, porta, nome):
-        self.IPs = []
-        self.IPs.append(IP)
-        self.portas = []
-        self.portas.append(porta)
-        self.nomes = []
-        self.nomes.append(nome)
+        self.IP = IP
+        self.porta = porta
+        self.nomes = nome
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conexoes = []
                 
@@ -40,7 +33,7 @@ class NO_Cliente:
     def desconectar_servidor():
         print('Fazer')
             
-    def conectar_usuario(self, NO_IP, NO_porta):
+    def conectar_cliente(self, NO_IP, NO_porta):
         try:
             conexao = self.socket.connect((NO_IP, NO_porta))
             self.conexoes.append(conexao)
@@ -49,13 +42,13 @@ class NO_Cliente:
             print(f'Conexão mal-sucedida com IP: {NO_IP} | porta: {NO_porta}')
             print(f'Erro encontrado: {e}')
             
-    def desconectar_usuario():
+    def desconectar_cliente():
         print('Fazer')
         
-    def search_portas(self,usuario_nome):
+    def search_portas(self,cliente_nome):
         print('Fazer')
         
-    def desvincular_usuario():
+    def desvincular_cliente():
         print('Fazer')
             
 class NO_Servidor:
@@ -64,13 +57,13 @@ class NO_Servidor:
         self.porta = porta
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conexoes = []
-        self.usuarios = []
+        self.clientes = []
         #tabela que armazena clientes
         
-    def registrar_usuario(self):
+    def registrar_cliente(self):
         print('Fazer')
         
-    def desvincular_usuário(self):
+    def desvincular_cliente(self):
         print('fazer')
     
     def conectar(self, NO_IP, NO_port):
@@ -90,9 +83,3 @@ class NO_Servidor:
         
     def print_clientes(self):
         print('Fazer')
-        
-class Usuario:
-    def __init__(self, IP, porta, nome):
-        self.IP = IP
-        self.porta = porta
-        self.nome = nome
