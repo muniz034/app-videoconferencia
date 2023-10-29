@@ -17,20 +17,82 @@
 import socket
 import threading
 
-class Ponto:
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
+class NO_Cliente:
+    def __init__(self, IP, porta, nome):
+        self.IPs = []
+        self.IPs.append(IP)
+        self.portas = []
+        self.portas.append(porta)
+        self.nomes = []
+        self.nomes.append(nome)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conexoes = []
-        
-    def conectar(self, ponto_host, ponto_port):
+                
+    def conectar_servidor(self, servidor_IP, servidor_porta):
         try:
-            conexao = self.socket.connect((ponto_host, ponto_port))
+            conexao = self.socket.connect((servidor_IP, servidor_porta))
             self.conexoes.append(conexao)
-            print(f'Conexão bem-sucedida com host: {ponto_host} | porta: {ponto_port}')
+            print(f'Conexão bem-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
         except socket.error as e:
-            print(f'Conexão mal-sucedida com host: {ponto_host} | porta: {ponto_port}')
+            print(f'Conexão mal-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
+            print(f'Erro encontrado: {e}')
+            
+    def desconectar_servidor():
+        print('Fazer')
+            
+    def conectar_usuario(self, NO_IP, NO_porta):
+        try:
+            conexao = self.socket.connect((NO_IP, NO_porta))
+            self.conexoes.append(conexao)
+            print(f'Conexão bem-sucedida com IP: {NO_IP} | porta: {NO_porta}')
+        except socket.error as e:
+            print(f'Conexão mal-sucedida com IP: {NO_IP} | porta: {NO_porta}')
+            print(f'Erro encontrado: {e}')
+            
+    def desconectar_usuario():
+        print('Fazer')
+        
+    def search_portas(self,usuario_nome):
+        print('Fazer')
+        
+    def desvincular_usuario():
+        print('Fazer')
+            
+class NO_Servidor:
+    def __init__(self, IP, porta):
+        self.IP = IP
+        self.porta = porta
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conexoes = []
+        self.usuarios = []
+        #tabela que armazena clientes
+        
+    def registrar_usuario(self):
+        print('Fazer')
+        
+    def desvincular_usuário(self):
+        print('fazer')
+    
+    def conectar(self, NO_IP, NO_port):
+        try:
+            conexao = self.socket.connect((NO_IP, NO_port))
+            self.conexoes.append(conexao)
+            print(f'Conexão bem-sucedida com IP: {NO_IP} | porta: {NO_port}')
+        except socket.error as e:
+            print(f'Conexão mal-sucedida com IP: {NO_IP} | porta: {NO_port}')
             print(f'Erro encontrado: {e}')
 
-#169.254.150.66/16
+    def desconectar(self):
+        print('Fazer')
+        
+    def get_cliente(self):
+        print('Fazer')
+        
+    def print_clientes(self):
+        print('Fazer')
+        
+class Usuario:
+    def __init__(self, IP, porta, nome):
+        self.IP = IP
+        self.porta = porta
+        self.nome = nome
