@@ -17,7 +17,7 @@ class NO_Cliente:
     def __init__(self, IP, porta, nome):
         self.IP = IP
         self.porta = porta
-        self.nomes = nome
+        self.nome = nome
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conexoes = []
                 
