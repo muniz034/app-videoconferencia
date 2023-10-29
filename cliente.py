@@ -11,6 +11,7 @@ class NO_Cliente:
         self.socket.settimeout(180.0)
         #self.socket.listen()
         self.conexoes = []
+        self.servidor = None
     
     def add_porta(self, porta):
         self.portas.append(porta)
@@ -25,7 +26,7 @@ class NO_Cliente:
             conexao = self.socket.dup()
             conexao.bind((self.IP, self.portas.pop()))
             conexao.connect((servidor_IP, servidor_porta))
-            self.conexoes.append(conexao)
+            self.servidor =  conexao
             print(f'Conexão bem-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
         except socket.error as e:
             print(f'Conexão mal-sucedida com IP: {servidor_IP} | porta: {servidor_porta}')
@@ -33,7 +34,9 @@ class NO_Cliente:
             
     def conectar_cliente(self, NO_IP, NO_porta):
         try:
-            conexao = self.socket.connect((NO_IP, NO_porta))
+            conexao = self.socket.dup()
+            conexao.bind((self.IP, self.portas.pop()))
+            conexao.connect((NO_IP, NO_porta))
             self.conexoes.append(conexao)
             print(f'Conexão bem-sucedida com IP: {NO_IP} | porta: {NO_porta}')
         except socket.error as e:
@@ -41,8 +44,11 @@ class NO_Cliente:
             print(f'Erro encontrado: {e}')
      
     #fecha 1 socket de cliente       
-    def desconectar_conexao(self, nome):
-        #pergunta par o server passando o nome,a porta e IP da conexão
+    def desconectar_cliente(self, nome):
+        if(self.servidor == None):
+            print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
+            return None
+        #pergunta para o server passando o nome do cliente em questão e retorna as portas e IP da conexão
         IP = 0
         porta = 1
         lista = []
@@ -57,6 +63,13 @@ class NO_Cliente:
         lista.reverse()
         self.conexoes = lista
         
+    #Desconectar do servidor
+    def desconectar_servidor(self):
+        if(self.servidor != None):
+            self.servidor.close()
+            self.add_porta(self.servidor.getsockname()[1])
+            self.servidor = None
+    
     #fecha todos os sockets de cliente      como avisar aos outros?  
     def desconectar(self):
         while(self.conexoes != []):
@@ -66,10 +79,18 @@ class NO_Cliente:
             self.add_porta(conexao.getsockname()[1])
         self.socket.close()
     
+    #envia nome para o servidor e retorna com IP e lista de portas.
     def search_portas(self,cliente_nome):
+        if(self.servidor == None):
+            print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
+            return None
         print('Fazer')
-        
-    def desvincular_cliente():
+    
+    #remover cliente da tabela do servidor    
+    def desvincular_cliente(self):
+        if(self.servidor == None):
+            print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
+            return None
         print('Fazer')
         
         
@@ -80,7 +101,6 @@ p.bind(('192.168.1.9', 30045))
 p.listen()
 
 cliente.conectar_servidor('192.168.1.9', 30045)
-#cliente.desconectar_conexao('servidor')
 cliente.desconectar()
 p.close()
 
