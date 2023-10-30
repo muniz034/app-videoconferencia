@@ -52,37 +52,54 @@ class NO_Cliente:
     #fecha 1 socket de cliente       
     def desconectar_cliente(self, nome):
         if(self.servidor == None):
-            print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
-            return None
-        #pergunta para o server passando o nome do cliente em questão e retorna as portas e IP da conexão
-        IP = 0
-        porta = 1
-        lista = []
-        while(self.conexoes != []):
-            conexao = self.conexoes.pop()
-            conexao = self.socket
-            if(conexao.getpeername() == (IP,porta)):
-                conexao.close()
-                self.add_porta(conexao.getsockname()[1])
-            else:
-                lista.append(conexao)
-        lista.reverse()
-        self.conexoes = lista
+            #recebe IP e porta como parâmetro,talvez vire uma função diferente
+            x = 0
+            while(x < self.conexoes.__len__()):
+                conexao = self.conexoes[x]
+                if(conexao.getpeername[0] == IP):
+                     y = 0
+                     while(y < porta.__len__()):
+                         if(conexao.getpeername()[1] == porta[y]):
+                             conexao.shutdown(socket.SHUT_RDWR)
+                             conexao.close()
+                             self.add_porta(conexao.getsockname()[1])
+                         y += 1
+        else:
+            #pergunta para o server passando o nome do cliente em questão e retorna as portas e IP da conexão
+            msg = f'Desejo os dados do cliente {nome}'
+            self.enviar_msg(msg,self.servidor)
+            resposta = self.receber_msg(self.servidor)
+            #tratar msg oque é IP e oque são as portas
+            IP = 0
+            porta = [0,1]
+            x = 0
+            while(x < self.conexoes.__len__()):
+                conexao = self.conexoes[x]
+                if(conexao.getpeername[0] == IP):
+                     y = 0
+                     while(y < porta.__len__()):
+                         if(conexao.getpeername()[1] == porta[y]):
+                             conexao.shutdown(socket.SHUT_RDWR)
+                             conexao.close()
+                             self.add_porta(conexao.getsockname()[1])
+                         y += 1
         
     #Desconectar do servidor
     def desconectar_servidor(self):
         if(self.servidor != None):
+            self.shutdown(socket.SHUT_RDWR)
             self.servidor.close()
             self.add_porta(self.servidor.getsockname()[1])
             self.servidor = None
     
-    #fecha todos os sockets de cliente      como avisar aos outros?  
+    #fecha todos os sockets de cliente 
     def desconectar(self):
         while(self.conexoes != []):
             conexao = self.conexoes.pop()
-            conexao = self.socket
+            conexao.shutdown(socket.SHUT_RDWR)
             conexao.close()
             self.add_porta(conexao.getsockname()[1])
+        self.shutdown(socket.SHUT_RDWR)
         self.socket.close()
     
     #envia nome para o servidor e retorna com IP e lista de portas.
@@ -90,14 +107,45 @@ class NO_Cliente:
         if(self.servidor == None):
             print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
             return None
-        print('Fazer')
+        #mudar msg depois com padrão
+        msg = f'Desejo as informações de {cliente_nome}'
+        self.enviar_msg(msg, self.servidor)
+        resposta = self.receber_msg(self.servidor)
+        print(f'{resposta}')
     
     #remover cliente da tabela do servidor    
     def desvincular_cliente(self):
         if(self.servidor == None):
-            print('Erro,aplicação não está conectadaa com o servidor,tente novamente.')
+            print('Erro,aplicação não está conectada com o servidor,tente novamente.')
             return None
-        print('Fazer')
+        #mudar msg depois com padrão
+        msg = 'Desejo me desvincular'
+        self.enviar_msg(msg, self.servidor)
+        self.desconectar_servidor()
+        
+    #Ainda pode ser melhorado e deve ser testado
+    def enviar_msg(self, msg, conexao):
+        totalEnviado = 0
+        try:
+            while totalEnviado < msg.__len__():
+                msgEnviada = conexao.send(msg[totalenviado:])
+                if msgEnviada == 0:
+                    raise RuntimeError(f"Ocorreu um erro com a conexão do socket {conexao.getpeername}")
+                totalenviado = totalenviado + msgEnviada
+        except RuntimeError as e:
+            print(f'{e}')
+            
+    #peguei exemplo do python,devo mudar isso depois.
+    def receber_msg(self, conexao):
+        chunks = []
+        bytes_recd = 0
+        while bytes_recd < MSGLEN:
+            chunk = conexao.recv(min(MSGLEN - bytes_recd, 2048))
+            if chunk == b'':
+                raise RuntimeError("socket connection broken")
+            chunks.append(chunk)
+            bytes_recd = bytes_recd + len(chunk)
+        return b''.join(chunks)
         
         
 cliente = NO_Cliente('192.168.1.9', 31045, 'Liam')
@@ -108,5 +156,6 @@ p.listen()
 
 cliente.conectar_servidor('192.168.1.9', 30045)
 cliente.desconectar()
+p.shutdown(socket.SHUT_RDWR)
 p.close()
 
