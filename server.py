@@ -59,7 +59,7 @@ class Controller:
     def user_exists(self, username, ip):
         # Logger.debug(f"Call to method user_exists: username({username}) address({address})")
         return any(user.username == username and user.ip == ip for user in self.users)
-    
+    #imprime tabela dinâmica com todos os clientes conectados
     def print_table(self):
         if(len(self.users) == 0): return
         
@@ -108,7 +108,7 @@ class Server:
         if(message.op is Operation.REMOVE_USER):
             result = self.controller.remove_user(message.username, message.ip)
             return Response(json.dumps({ 'message': "User removed" })) if result == 1 else Response(json.dumps({ 'message': "User don't exists" }))
-
+#Quebra mensagem para saber a operação desejada
     def parse_msg(self, data) -> Tuple[int, Request]:
         message = json.loads(data)
         op = -1

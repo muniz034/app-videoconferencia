@@ -22,22 +22,22 @@ class Client:
         except socket.error as e:
             Logger.debug(f"Unsuccessful connection to: {address}")
             Logger.debug(e)
-
+#Retorna Nome, IP e Porta do usuário desejado ou uma mensagem de erro.
     def find_user(self, user: User):
         message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-
+#salva informações na tabela dinâmica do servidor.Outros clientes podem vê-lo.
     def signin(self):
         message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'port': self.user.port }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-
+#Retira suas informações da tabela dinâmica do servidor.
     def logout(self):
         message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'port': self.user.port }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-
+#quebra a mensagem(json) para saber a operação a ser excutada no servidor
     def parse_msg(self, data) -> Tuple[int, Response]:
         message = json.loads(data)
         return (1, Response(message["message"]))

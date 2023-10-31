@@ -8,6 +8,6 @@ class Request:
         self.ip = ip
         self.port = port
         self.username = username
-
+#nome , número da operação desejada,IP  e porta
     def __str__(self):
         return "{ " + f"username: {self.username}, op: {self.op}, ip: {self.ip}, port: {self.port}" + " }"
