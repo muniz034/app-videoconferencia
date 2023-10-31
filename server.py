@@ -59,6 +59,20 @@ class Controller:
     def user_exists(self, username, ip):
         # Logger.debug(f"Call to method user_exists: username({username}) address({address})")
         return any(user.username == username and user.ip == ip for user in self.users)
+    
+    def print_table(self):
+        if(len(self.users) == 0): return
+        
+        data = [["IP", "Username", "Port"]]
+
+        for i in range(len(self.users)):
+            data.append([self.users[i].ip, self.users[i].username, self.users[i].port])
+
+        columns_widths = [max(len(str(item)) for item in column) for column in zip(*data)]
+
+        Logger.debug("IP TABLE")
+        for row in data:
+            print("  ".join(f"{item:{width}}" for item, width in zip(row, columns_widths)))
 
 class Server:
     def __init__(self, ip, port, n_clientes):
@@ -109,23 +123,24 @@ class Server:
     def receive_msg(self, address: Address):
         client_socket = self.client_table.get(str(address))
         data = client_socket.recv(1024).decode("utf-8")
-        Logger.debug(f"IP table {self.client_table.keys()}")
 
         if data: 
             ok, message = self.parse_msg(data)
             if(not ok): return self.send_msg(message, address)
-            Logger.debug(f"Message received from {address}: {message}")
+            # Logger.debug(f"Message received from {address}: {message}")
             
             return self.send_msg(self.process_msg(message), address)
 
     def send_msg(self, response: Response, address: Address):
         client_socket = self.client_table.get(str(address))
         client_socket.send(response.message.encode("utf-8"))
-        Logger.debug(f"Message sent to {address}: {response.message}")
+        self.controller.print_table()
+        # Logger.debug(f"Message sent to {address}: {response.message}")
 
     def end(self, address: Address):
         client_socket = self.client_table.get(str(address))
         client_socket.close()
+
 
 def client_listener(server: Server, address: Address):
     while True:

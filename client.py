@@ -51,7 +51,7 @@ class Client:
 
     def send_msg(self, request: str, address: Address):
         self.socket.send(request.encode("utf-8"))
-        Logger.debug(f"Message sent to {address}: {request}")
+        # Logger.debug(f"Message sent to {address}: {request}")
 
 username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
@@ -61,7 +61,7 @@ client.connect(client.server_address)
 
 while True:
     Logger.debug("1 - Find user | 2 - Signin | 3 - Logout")
-    op = int(input())
+    op = int(input("Insert a op code: "))
 
     if(op == 1):
         username = input("Insert user's username: ")
