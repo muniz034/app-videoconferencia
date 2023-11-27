@@ -38,11 +38,11 @@ class Controller:
         else:
             return (-1, None)
         
-    def insert_user(self, username, ip, port):
+    def insert_user(self, username, ip, port, video_port, audio_port):
         # Logger.debug(f"Call to method insert_user: username({username}) ip({ip}) port({port})")
         user_existe = self.user_exists(username, ip)
         if not user_existe:
-            self.users.append(User(username, ip, port))
+            self.users.append(User(username, ip, port, video_port, audio_port))
             return 1
         else:
             return -1
@@ -63,10 +63,10 @@ class Controller:
     def print_table(self):
         if(len(self.users) == 0): return
         
-        data = [["IP", "Username", "Port"]]
+        data = [["IP", "Username", "Port",  "Video_Port", "Audio_Port"]]
 
         for i in range(len(self.users)):
-            data.append([self.users[i].ip, self.users[i].username, self.users[i].port])
+            data.append([self.users[i].ip, self.users[i].username, self.users[i].port, self.users[i].video_port, self.users[i].audio_port])
 
         columns_widths = [max(len(str(item)) for item in column) for column in zip(*data)]
 
@@ -118,7 +118,7 @@ class Server:
         except ValueError as e:
             return (-1, "Op code not found")
         
-        return (1, Request(op, message["ip"], message["port"], message["username"]))
+        return (1, Request(op, message["ip"], message["port"], message["username"], message["video_port"], message["audio_port"]))
     
     def receive_msg(self, address: Address):
         client_socket = self.client_table.get(str(address))

@@ -15,8 +15,8 @@ from user import User
 
 
 class Client:
-    def __init__(self, ip, port, username, server_address: Address):
-        self.user = User(username, ip, port)
+    def __init__(self, ip, port, video_port, audio_port, username, server_address: Address):
+        self.user = User(username, ip, port, video_port, audio_port)
         self.server_address = server_address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(90)
@@ -35,12 +35,12 @@ class Client:
         self.receive_msg(self.server_address)
 #salva informações na tabela dinâmica do servidor.Outros clientes podem vê-lo.
     def signin(self):
-        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'port': self.user.port }
+        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 #Retira suas informações da tabela dinâmica do servidor.
     def logout(self):
-        message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'port': self.user.port }
+        message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 #quebra a mensagem(json) para saber a operação a ser excutada no servidor
@@ -58,12 +58,15 @@ class Client:
     def send_msg(self, request: str, address: Address):
         self.socket.send(request.encode("utf-8"))
         # Logger.debug(f"Message sent to {address}: {request}")
+        
+    def make_a_call(self, address: Address,):
+        return True
 
 username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
 
 client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"))
-#client.connect(client.server_address)
+client.connect(client.server_address)
 
 def call(dest_IP,dest_port):
     sNumber = 0
@@ -84,11 +87,11 @@ def call(dest_IP,dest_port):
                 break
 
             # Encode frame to JPEG
-            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]  # Adjust quality as needed
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
             _, encoded_frame = cv2.imencode('.jpg', frame, encode_param)
 
             # Create RTP packet
-            rtp_packet = send_rtp_packet(encoded_frame.tobytes(),sNumber,int(time.time()),12345)
+            rtp_packet = pack_rtp_packet(encoded_frame.tobytes(),sNumber,int(time.time()),12345)
             sNumber += 1
             # Get the packet bytes
             packet_bytes = rtp_packet
@@ -103,11 +106,11 @@ def call(dest_IP,dest_port):
         cv2.destroyAllWindows()
         udp_socket.close()
 
-def send_rtp_packet(data, sequence_number, timestamp, ssrc):
+def pack_rtp_packet(data, sequence_number, timestamp, ssrc):
     version = 2
     padding = 0
     extension = 0
-    cc = 0  # contributing sources count
+    cc = 0
     marker = 0
     PAYLOAD_TYPE = 96
 
@@ -143,7 +146,7 @@ while True:
         dest_IP = input("Insert the IP of who you want to call: ")
         dest_port = input("Insert the Port of who you want to call: ")
         #ask if patner wants to connect
-        swipe = True
+        swipe = client.make_a_call(Address(dest_IP, dest_port))
         if(swipe == True):
             call(dest_IP,dest_port)
             
