@@ -64,8 +64,10 @@ class Client:
 
 username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
+video_port = int(input("Insert the desired port for video: "))
+audio_port = int(input("Insert the desired port for audio: "))
 
-client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"))
+client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"), video_port, audio_port)
 client.connect(client.server_address)
 
 def call(dest_IP,dest_port):
