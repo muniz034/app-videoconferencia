@@ -61,6 +61,44 @@ class Client:
         
     def make_a_call(self, address: Address,):
         return True
+    
+    def call(self,dest_IP,dest_port):
+        sNumber = 0
+        # Initialize video capture using OpenCV
+        cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
+
+        # Create a UDP socket
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            print("If you want to close the connection type \"q\" on the window")
+            while True:
+                # Capture frame-by-frame
+                ret, frame = cap.read()
+
+                # Display the frame
+                cv2.imshow('Video Stream', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+                # Encode frame to JPEG
+                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+                _, encoded_frame = cv2.imencode('.jpg', frame, encode_param)
+
+                # Create RTP packet
+                rtp_packet = pack_rtp_packet(encoded_frame.tobytes(),sNumber,int(time.time()),self.user.video_port)
+                sNumber += 1
+                # Get the packet bytes
+                packet_bytes = rtp_packet
+
+                # Send the packet over UDP
+                udp_socket.sendto(packet_bytes, (dest_IP, dest_port))
+        except KeyboardInterrupt:
+            print("Stopping...")
+        finally:
+            # Release the video capture, close UDP socket, and destroy OpenCV windows
+            cap.release()
+            cv2.destroyAllWindows()
+            udp_socket.close()
 
 username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
@@ -69,44 +107,6 @@ audio_port = int(input("Insert the desired port for audio: "))
 
 client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"), video_port, audio_port)
 client.connect(client.server_address)
-
-def call(dest_IP,dest_port):
-    sNumber = 0
-    # Initialize video capture using OpenCV
-    cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
-
-    # Create a UDP socket
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        print("If you want to close the connection type \"q\" on the window")
-        while True:
-            # Capture frame-by-frame
-            ret, frame = cap.read()
-
-            # Display the frame
-            cv2.imshow('Video Stream', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-            # Encode frame to JPEG
-            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-            _, encoded_frame = cv2.imencode('.jpg', frame, encode_param)
-
-            # Create RTP packet
-            rtp_packet = pack_rtp_packet(encoded_frame.tobytes(),sNumber,int(time.time()),12345)
-            sNumber += 1
-            # Get the packet bytes
-            packet_bytes = rtp_packet
-
-            # Send the packet over UDP
-            udp_socket.sendto(packet_bytes, (dest_IP, dest_port))
-    except KeyboardInterrupt:
-        print("Stopping...")
-    finally:
-        # Release the video capture, close UDP socket, and destroy OpenCV windows
-        cap.release()
-        cv2.destroyAllWindows()
-        udp_socket.close()
 
 def pack_rtp_packet(data, sequence_number, timestamp, ssrc):
     version = 2
@@ -150,7 +150,7 @@ while True:
         #ask if patner wants to connect
         swipe = client.make_a_call(Address(dest_IP, dest_port))
         if(swipe == True):
-            call(dest_IP,dest_port)
+            client.call(dest_IP,dest_port)
             
         else:
             print("User " + dest_IP + ":" + dest_port + " denied the call")
