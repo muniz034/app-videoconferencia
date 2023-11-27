@@ -1,12 +1,18 @@
 import socket
 import threading
 import json
+import cv2
+import rtp
+import struct
+import time
+
 from typing import Tuple
 
 from logger import Logger
 from message import Request, Response
 from server import Address
 from user import User
+
 
 class Client:
     def __init__(self, ip, port, username, server_address: Address):
@@ -57,10 +63,72 @@ username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
 
 client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"))
-client.connect(client.server_address)
+#client.connect(client.server_address)
+
+def call(dest_IP,dest_port):
+    sNumber = 0
+    # Initialize video capture using OpenCV
+    cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
+
+    # Create a UDP socket
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        print("If you want to close the connection type \"q\" on the window")
+        while True:
+            # Capture frame-by-frame
+            ret, frame = cap.read()
+
+            # Display the frame
+            cv2.imshow('Video Stream', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            # Encode frame to JPEG
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]  # Adjust quality as needed
+            _, encoded_frame = cv2.imencode('.jpg', frame, encode_param)
+
+            # Create RTP packet
+            rtp_packet = send_rtp_packet(encoded_frame.tobytes(),sNumber,int(time.time()),12345)
+            sNumber += 1
+            # Get the packet bytes
+            packet_bytes = rtp_packet
+
+            # Send the packet over UDP
+            udp_socket.sendto(packet_bytes, (dest_IP, dest_port))
+    except KeyboardInterrupt:
+        print("Stopping...")
+    finally:
+        # Release the video capture, close UDP socket, and destroy OpenCV windows
+        cap.release()
+        cv2.destroyAllWindows()
+        udp_socket.close()
+
+def send_rtp_packet(data, sequence_number, timestamp, ssrc):
+    version = 2
+    padding = 0
+    extension = 0
+    cc = 0  # contributing sources count
+    marker = 0
+    PAYLOAD_TYPE = 96
+
+    # RTP header
+    rtp_header = struct.pack(
+        "!BBHII",
+        (version << 6) | (padding << 5) | (extension << 4) | cc,
+        (marker << 7) | PAYLOAD_TYPE,
+        sequence_number,
+        timestamp,
+        ssrc,
+    )
+
+    # RTP packet (header + data)
+    rtp_packet = rtp_header + data
+
+    return rtp_packet
+
 
 while True:
-    Logger.debug("1 - Find user | 2 - Signin | 3 - Logout")
+    Logger.debug("1 - Find user | 2 - Signin | 3 - Logout | 4 - Make a Call")
     op = int(input("Insert a op code: "))
 
     if(op == 1):
@@ -71,5 +139,15 @@ while True:
         client.signin()
     elif(op == 3):
         client.logout()
+    elif(op == 4):
+        dest_IP = input("Insert the IP of who you want to call: ")
+        dest_port = input("Insert the Port of who you want to call: ")
+        #ask if patner wants to connect
+        swipe = True
+        if(swipe == True):
+            call(dest_IP,dest_port)
+            
+        else:
+            print("User " + dest_IP + ":" + dest_port + " denied the call")
     else:
         pass
