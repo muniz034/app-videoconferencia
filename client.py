@@ -91,7 +91,7 @@ class Client:
                 packet_bytes = rtp_packet
 
                 # Send the packet over UDP
-                udp_socket.sendto(packet_bytes, (dest_IP, dest_port))
+                udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
@@ -105,7 +105,7 @@ port = int(input("Insert the desired port: "))
 video_port = int(input("Insert the desired port for video: "))
 audio_port = int(input("Insert the desired port for audio: "))
 
-client = Client("127.0.0.1", port, username, Address("127.0.0.1", "8080"), video_port, audio_port)
+client = Client("127.0.0.1", port, video_port, audio_port, username, Address("127.0.0.1", "8080"))
 client.connect(client.server_address)
 
 def pack_rtp_packet(data, sequence_number, timestamp, ssrc):
