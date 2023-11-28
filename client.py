@@ -62,7 +62,14 @@ class Client:
     def make_a_call(self, address: Address,):
         return True
     
-    def call(self,dest_IP,dest_port):
+    def audio_call(self, address: Address):
+        # Cria duas threads:
+            # Loop com audioInterface.read() + udp_socket.sendto()
+            # Loop com audioInterface.write() + udp_socket.recv()
+        # Utilizar os métodos que estão em main.py para acabar com a chamada
+        return True
+    
+    def video_call(self,dest_IP,dest_port):
         sNumber = 0
         # Initialize video capture using OpenCV
         cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
