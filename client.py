@@ -139,7 +139,7 @@ while True:
     if(op == 1):
         username = input("Insert user's username: ")
         ip = input("Insert user's ip: ")
-        client.find_user(User(username, ip, "0"))
+        client.find_user(User(username, ip, "0", "0", "0"))
     elif(op == 2):
         client.signin()
     elif(op == 3):

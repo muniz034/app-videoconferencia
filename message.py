@@ -11,6 +11,6 @@ class Request:
         self.video_port = video_port
         self.audio_port = audio_port
 
-#nome , número da operação desejada,IP  e porta
+#nome , número da operação desejada, IP, porta TC/IP, porta para video, porta para audio
     def __str__(self):
         return "{ " + f"username: {self.username}, op: {self.op}, ip: {self.ip}, port: {self.port}, video_port: {self.video_port}, audio_port: {self.audio_port}" + " }"

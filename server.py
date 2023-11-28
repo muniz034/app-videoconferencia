@@ -102,7 +102,7 @@ class Server:
             return Response(json.dumps({ 'message': str(result) })) if index > -1 else Response(json.dumps({ 'message': "User not found" }))
 
         if(message.op is Operation.INSERT_USER):
-            result = self.controller.insert_user(message.username, message.ip, message.port)
+            result = self.controller.insert_user(message.username, message.ip, message.port, message.video_port, message.audio_port)
             return Response(json.dumps({ 'message': "User created" })) if result == 1 else Response(json.dumps({ 'message': "User already exists" }))
 
         if(message.op is Operation.REMOVE_USER):
