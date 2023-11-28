@@ -30,7 +30,7 @@ class Client:
             Logger.debug(e)
 #Retorna Nome, IP e Porta do usuário desejado ou uma mensagem de erro.
     def find_user(self, user: User):
-        message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'port': '' }
+        message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'port': '' , 'video_port': '', 'audio_port': ''}
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 #salva informações na tabela dinâmica do servidor.Outros clientes podem vê-lo.
