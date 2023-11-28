@@ -13,6 +13,9 @@ class Operation(Enum):
     FIND_USER = 1
     INSERT_USER = 2
     REMOVE_USER = 3
+    MAKE_A_CALL = 4
+    ACCEPT_CALL = 5
+    DENY_CALL = 6
 
 class Address:
     def __init__(self, ip, port):
@@ -55,7 +58,7 @@ class Controller:
             return 1
         else:
             return -1
-
+        
     def user_exists(self, username, ip):
         # Logger.debug(f"Call to method user_exists: username({username}) address({address})")
         return any(user.username == username and user.ip == ip for user in self.users)
@@ -108,6 +111,18 @@ class Server:
         if(message.op is Operation.REMOVE_USER):
             result = self.controller.remove_user(message.username, message.ip)
             return Response(json.dumps({ 'message': "User removed" })) if result == 1 else Response(json.dumps({ 'message': "User don't exists" }))
+        
+        if(message.op is Operation.MAKE_A_CALL):
+            self.send_msg("Calling,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}", Address(message.destination_ip,message.destination_port))#send message to destination
+            return Response(json.dumps({ 'message': "Ringing" }))
+        
+        if(message.op is Operation.ACCEPT_CALL):
+            self.send_msg("Call accepted",Address(message.ip,message.port))#send message to origin
+            return Response(json.dumps({ 'message': "Call accepted" }))
+        
+        if(message.op is Operation.DENY_CALL):
+            self.send_msg("Call denied",Address(message.ip,message.port))#send message to origin
+            return Response(json.dumps({ 'message': "Call denied" }))
 #Quebra mensagem para saber a operação desejada
     def parse_msg(self, data) -> Tuple[int, Request]:
         message = json.loads(data)
@@ -118,7 +133,7 @@ class Server:
         except ValueError as e:
             return (-1, "Op code not found")
         
-        return (1, Request(op, message["ip"], message["port"], message["username"], message["video_port"], message["audio_port"]))
+        return (1, Request(op, message["ip"], message["port"], message["username"], message["video_port"], message["audio_port"], message["destination_ip"], message["destination_port"]))
     
     def receive_msg(self, address: Address):
         client_socket = self.client_table.get(str(address))
