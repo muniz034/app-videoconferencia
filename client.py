@@ -1,10 +1,12 @@
 import socket
 import threading
 import json
+from call import AudioInterface
 import cv2
 #import rtp
 import struct
 import time
+import pyaudio
 
 from typing import Tuple
 
@@ -25,6 +27,7 @@ class Client:
         self.user = User(username, ip, port, video_port, audio_port)
         self.server_address = server_address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.audioInterface = AudioInterface()
         self.socket.settimeout(90)
     
     def connect(self, address: Address):
@@ -34,22 +37,22 @@ class Client:
         except socket.error as e:
             Logger.debug(f"Unsuccessful connection to: {address}")
             Logger.debug(e)
-#Retorna Nome, IP e Porta do usuário desejado ou uma mensagem de erro.
+
     def find_user(self, user: User):
         message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'port': '' , 'video_port': '', 'audio_port': '', 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-#salva informações na tabela dinâmica do servidor.Outros clientes podem vê-lo.
+
     def signin(self):
         message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-#Retira suas informações da tabela dinâmica do servidor.
+
     def logout(self):
         message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
-#quebra a mensagem(json) para saber a operação a ser excutada no servidor
+
     def parse_msg(self, data) -> Tuple[int, Response]:
         message = json.loads(data)
         return (1, Response(message["message"]))
@@ -84,12 +87,9 @@ class Client:
         message = { 'username': self.user.username, 'op': 4, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': address.ip, 'destination_port': address.port }
         self.send_msg(json.dumps(message), self.server_address)
     
-    def audio_call(self, address: Address):
-        # Cria duas threads:
-            # Loop com audioInterface.read() + udp_socket.sendto()
-            # Loop com audioInterface.write() + udp_socket.recv()
-        # Utilizar os métodos que estão em main.py para acabar com a chamada
-        return True
+    def audio_call(self, user: User):
+        threading.Thread(target=self.audioInterface.receive_audio).start()
+        threading.Thread(target=self.audioInterface.send_audio, args=(user,)).start()
     
     def video_call(self,dest_IP,dest_port):
         sNumber = 0
