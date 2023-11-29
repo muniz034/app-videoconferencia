@@ -1,15 +1,16 @@
 import pyaudio
 
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-CHUNK = 1024
-
 class AudioInterface:
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 8000
+    CHUNK = 1024
+    PAYLOAD_TYPE = 11
+
     def __init__(self):
-        audio = pyaudio.PyAudio()
-        self.input_stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
-        self.output_stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, output=True, frames_per_buffer=1024)
+        self.audio = pyaudio.PyAudio()
+        self.input_stream = self.audio.open(format=pyaudio.paInt16, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
+        self.output_stream = self.audio.open(format=pyaudio.paInt16, channels=self.CHANNELS, rate=self.RATE, output=True, frames_per_buffer=self.CHUNK)
 
     def write(self, data):
         self.output_stream.write(data)
