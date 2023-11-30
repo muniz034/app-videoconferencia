@@ -118,8 +118,10 @@ class Client:
                 # Create a packet
                 packet_bytes = pickle.dumps(frame)
 
+                # Pack the size of the data and send it over the socket
+                export_udp_socket.sendto(struct.pack("!I", len(packet_bytes)), (dest_IP, int(dest_port)))
                 # Send the packet over UDP
-                export_udp_socket.sendto(struct.pack("Q", len(packet_bytes)) + packet_bytes, (dest_IP, int(dest_port)))
+                export_udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
@@ -129,7 +131,8 @@ class Client:
             export_udp_socket.close()
             
     def import_video_call(self,username):
-
+        #Create window
+        cv2.namedWindow(username, cv2.WINDOW_NORMAL)
         # Create a UDP socket
         import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         import_udp_socket.bind((self.user.ip, self.user.video_port))
@@ -137,11 +140,12 @@ class Client:
         try:
             print("If you want to close the connection type \"q\" on the window")
             while True:
-                # Recieve packet
-                packet = import_udp_socket.recv(1000000)
-                size = struct.unpack("Q", packet[:8])[0]
-                packet = packet[8:]
+                # Receive the size of the data
+                size, addr = import_udp_socket.recvfrom(4)
+                size = struct.unpack("!I", size)[0]
 
+                # Receive the actual data
+                packet, addr = import_udp_socket.recvfrom(size)
                 # Descompact packet
                 frame = pickle.loads(packet)
 
