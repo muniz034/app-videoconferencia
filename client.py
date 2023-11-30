@@ -113,11 +113,12 @@ class Client:
         # Create a UDP socket
         #export_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            print("If you want to close the connection type \"q\" on the window")
+            #print("If you want to close the connection type \"q\" on the window")
             camera.start_stream()
-            #while True:
+            while True:
                 # Capture frame-by-frame
                 #ret, frame = cap.read()
+                ancora = 0
 
                 # Create a packet
                 #packet_bytes = pickle.dumps(frame)
@@ -127,16 +128,17 @@ class Client:
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
+            print("Ending...")
             camera.stop_stream()
             
             # Release the video capture, close UDP socket, and destroy OpenCV windows
             #cap.release()
-            #cv2.destroyAllWindows()
+            cv2.destroyAllWindows()
             #export_udp_socket.close()
             
     def import_video_call(self,username):
         #Create window
-        #cv2.namedWindow(username, cv2.WINDOW_NORMAL)
+        cv2.namedWindow(username, cv2.WINDOW_NORMAL)
         # Create a UDP socket
         #import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         #import_udp_socket.bind((self.user.ip, self.user.video_port))
@@ -146,7 +148,7 @@ class Client:
         try:
             print("If you want to close the connection type \"q\" on the window")
             receiver.start_server()
-            #while True:
+            while True:
 
                 # Receive the packet
                 #packet, addr = import_udp_socket.recvfrom(1)
@@ -157,16 +159,17 @@ class Client:
                 #cv2.imshow(username, frame)
                 
                 #Condition to break
-                #if cv2.waitKey(1) & 0xFF == ord('q'):
-                    #break
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
 
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
+            print("Ending...")
             receiver.stop_server()
             
             # Release the video capture, close UDP socket, and destroy OpenCV windows
-            #cv2.destroyAllWindows()
+            cv2.destroyAllWindows()
             #import_udp_socket.close()
 
 username = input("Insert an username: ")
