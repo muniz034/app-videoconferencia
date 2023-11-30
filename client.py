@@ -6,6 +6,7 @@ import cv2
 import struct
 import time
 import pyaudio
+import pickle
 
 from typing import Tuple
 
@@ -111,15 +112,11 @@ class Client:
                 # Capture frame-by-frame
                 ret, frame = cap.read()
 
-                # Encode frame to JPEG
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-                _, encoded_frame = cv2.imencode('.jpg', frame, encode_param)
-
                 # Create a packet
-                packet_bytes = encoded_frame.tobytes()
+                packet_bytes = pickle.dumps(frame)
 
                 # Send the packet over UDP
-                export_udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
+                export_udp_socket.sendto(struct.pack("Q", len(packet_bytes)) + packet_bytes, (dest_IP, int(dest_port)))
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
@@ -138,11 +135,14 @@ class Client:
         try:
             print("If you want to close the connection type \"q\" on the window")
             while True:
-                # Capture frame-by-frame
+                # Recieve packet
+                
                 packet = import_udp_socket.recv()
+                size = struct.unpack("Q", packet[:8])[0]
+                packet = packet[8:]
 
-                # Desencode frame to JPEG
-                frame = packet.__get__("img")
+                # Descompact packet
+                frame = pickle.loads(packet)
 
                 # Display the frame
                 cv2.imshow(username, frame)
