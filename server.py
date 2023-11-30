@@ -41,11 +41,11 @@ class Controller:
         else:
             return (-1, None)
         
-    def insert_user(self, username, ip, port, video_port, audio_port):
+    def insert_user(self, username, tcp_port, ip, port, video_port, audio_port):
         # Logger.debug(f"Call to method insert_user: username({username}) ip({ip}) port({port})")
         user_existe = self.user_exists(username, ip)
         if not user_existe:
-            self.users.append(User(username, ip, port, video_port, audio_port))
+            self.users.append(User(username, ip, tcp_port, port, video_port, audio_port))
             return 1
         else:
             return -1
@@ -66,10 +66,10 @@ class Controller:
     def print_table(self):
         if(len(self.users) == 0): return
         
-        data = [["IP", "Username", "Port",  "Video_Port", "Audio_Port"]]
+        data = [["IP", "Username", "TCP Port", "UDP Port",  "Video_Port", "Audio_Port"]]
 
         for i in range(len(self.users)):
-            data.append([self.users[i].ip, self.users[i].username, self.users[i].port, self.users[i].video_port, self.users[i].audio_port])
+            data.append([self.users[i].ip, self.users[i].username, self.users[i].tcp_port, self.users[i].port, self.users[i].video_port, self.users[i].audio_port])
 
         columns_widths = [max(len(str(item)) for item in column) for column in zip(*data)]
 
@@ -105,7 +105,7 @@ class Server:
             return Response(json.dumps({ 'message': str(result) })) if index > -1 else Response(json.dumps({ 'message': "User not found" }))
 
         if(message.op is Operation.INSERT_USER):
-            result = self.controller.insert_user(message.username, message.ip, message.port, message.video_port, message.audio_port)
+            result = self.controller.insert_user(message.username, message.ip, message.tcp_port, message.port, message.video_port, message.audio_port)
             return Response(json.dumps({ 'message': "User created" })) if result == 1 else Response(json.dumps({ 'message': "User already exists" }))
 
         if(message.op is Operation.REMOVE_USER):
@@ -113,6 +113,7 @@ class Server:
             return Response(json.dumps({ 'message': "User removed" })) if result == 1 else Response(json.dumps({ 'message': "User don't exists" }))
         
         if(message.op is Operation.MAKE_A_CALL):
+            Logger.debug(f"message: {message.__str__()}")
             self.send_msg(Response(json.dumps({ 'message':"Calling,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.destination_port))#send message to destination
             return Response(json.dumps({ 'message': "Ringing" }))
         
@@ -133,7 +134,7 @@ class Server:
         except ValueError as e:
             return (-1, "Op code not found")
         
-        return (1, Request(op, message["ip"], message["port"], message["username"], message["video_port"], message["audio_port"], message["destination_ip"], message["destination_port"]))
+        return (1, Request(op, message["ip"], message["tcp_port"], message["port"], message["username"], message["video_port"], message["audio_port"], message["destination_ip"], message["destination_port"]))
     
     def receive_msg(self, address: Address):
         client_socket = self.client_table.get(str(address))
@@ -147,7 +148,7 @@ class Server:
             return self.send_msg(self.process_msg(message), address)
 
     def send_msg(self, response: Response, address: Address):
-        client_socket = self.client_table.get(str(address))
+        client_socket = self.client_table.get(address.__str__())
         client_socket.send(response.message.encode("utf-8"))
         self.controller.print_table()
         # Logger.debug(f"Message sent to {address}: {response.message}")

@@ -24,15 +24,17 @@ class Address:
 
 class Client:
     def __init__(self, ip, port, video_port, audio_port, username, server_address: Address):
-        self.user = User(username, ip, port, video_port, audio_port)
         self.server_address = server_address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.audioInterface = AudioInterface()
         self.socket.settimeout(90)
+        self.tcp_port = ""
+        self.user = User(username, ip, self.tcp_port, port, video_port, audio_port)
     
     def connect(self, address: Address):
         try:
             self.socket.connect((address.ip, int(address.port)))
+            self.user.tcp_port = self.socket.getsockname()[1]
             Logger.debug(f"Successful connection to: {address}")
         except socket.error as e:
             Logger.debug(f"Unsuccessful connection to: {address}")
@@ -44,7 +46,7 @@ class Client:
         self.receive_msg(self.server_address)
 
     def signin(self):
-        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
+        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'tcp_port': self.tcp_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
