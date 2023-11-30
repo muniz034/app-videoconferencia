@@ -113,15 +113,15 @@ class Server:
             return Response(json.dumps({ 'message': "User removed" })) if result == 1 else Response(json.dumps({ 'message': "User don't exists" }))
         
         if(message.op is Operation.MAKE_A_CALL):
-            self.send_msg("Calling,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}", Address(message.destination_ip,message.destination_port))#send message to destination
+            self.send_msg(Response(json.dumps({ 'message':"Calling,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.destination_port))#send message to destination
             return Response(json.dumps({ 'message': "Ringing" }))
         
         if(message.op is Operation.ACCEPT_CALL):
-            self.send_msg("Call accepted",Address(message.ip,message.port))#send message to origin
+            self.send_msg(Response(json.dumps({ 'message':"Call accepted,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.destination_port))#send message to origin
             return Response(json.dumps({ 'message': "Call accepted" }))
         
         if(message.op is Operation.DENY_CALL):
-            self.send_msg("Call denied",Address(message.ip,message.port))#send message to origin
+            self.send_msg(Response(json.dumps({ 'message':"Call denied"})),Address(message.destination_ip,message.destination_port))#send message to origin
             return Response(json.dumps({ 'message': "Call denied" }))
 #Quebra mensagem para saber a operação desejada
     def parse_msg(self, data) -> Tuple[int, Request]:
