@@ -68,7 +68,7 @@ class Client:
             if(message.message.startswith("Call accepted")):
                 caller = message.message.split(",")
                 #threads do video_call e audio_call
-                #self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
+                self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
                 threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
                 #threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                 print("Começou a chamada")
@@ -80,7 +80,7 @@ class Client:
                     message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
                     self.send_msg(json.dumps(message2), self.server_address)
                     #threads do video_call e audio_call
-                    #self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
+                    self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
                     #threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
                     threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                     
