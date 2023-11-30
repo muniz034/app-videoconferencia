@@ -7,6 +7,7 @@ import struct
 import time
 import pyaudio
 import pickle
+import vidstream
 
 from typing import Tuple
 
@@ -105,61 +106,68 @@ class Client:
     
     def export_video_call(self,dest_IP,dest_port):
         # Initialize video capture using OpenCV
-        cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
+        #cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
 
+        #Create client to capture and send frames/packets 
+        camera = vidstream.CameraClient(dest_IP,int(dest_port))
         # Create a UDP socket
-        export_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #export_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             print("If you want to close the connection type \"q\" on the window")
-            while True:
+            camera.start_stream()
+            #while True:
                 # Capture frame-by-frame
-                ret, frame = cap.read()
+                #ret, frame = cap.read()
 
                 # Create a packet
-                packet_bytes = pickle.dumps(frame)
+                #packet_bytes = pickle.dumps(frame)
 
-                # Pack the size of the data and send it over the socket
-                export_udp_socket.sendto(struct.pack("!I", len(packet_bytes)), (dest_IP, int(dest_port)))
                 # Send the packet over UDP
-                export_udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
+                #export_udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
+            camera.stop_stream()
+            
             # Release the video capture, close UDP socket, and destroy OpenCV windows
-            cap.release()
-            cv2.destroyAllWindows()
-            export_udp_socket.close()
+            #cap.release()
+            #cv2.destroyAllWindows()
+            #export_udp_socket.close()
             
     def import_video_call(self,username):
         #Create window
-        cv2.namedWindow(username, cv2.WINDOW_NORMAL)
+        #cv2.namedWindow(username, cv2.WINDOW_NORMAL)
         # Create a UDP socket
-        import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        import_udp_socket.bind((self.user.ip, self.user.video_port))
+        #import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        #import_udp_socket.bind((self.user.ip, self.user.video_port))
         
+        # Create a sever to recieve the packets/frames
+        receiver = vidstream.StreamingServer(self.user.ip, int(self.user.video_port))
         try:
             print("If you want to close the connection type \"q\" on the window")
-            while True:
-                # Receive the size of the data
-                size, addr = import_udp_socket.recvfrom(1000000000)
-                size = struct.unpack("!I", size)[0]
+            receiver.start_server()
+            #while True:
 
-                # Receive the actual data
-                packet, addr = import_udp_socket.recvfrom(size + 1000000000)
+                # Receive the packet
+                #packet, addr = import_udp_socket.recvfrom(1)
                 # Descompact packet
-                frame = pickle.loads(packet)
+                #frame = pickle.loads(packet)
 
                 # Display the frame
-                cv2.imshow(username, frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                #cv2.imshow(username, frame)
+                
+                #Condition to break
+                #if cv2.waitKey(1) & 0xFF == ord('q'):
+                    #break
 
         except KeyboardInterrupt:
             print("Stopping...")
         finally:
+            receiver.stop_server()
+            
             # Release the video capture, close UDP socket, and destroy OpenCV windows
-            cv2.destroyAllWindows()
-            import_udp_socket.close()
+            #cv2.destroyAllWindows()
+            #import_udp_socket.close()
 
 username = input("Insert an username: ")
 port = int(input("Insert the desired port: "))
