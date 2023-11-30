@@ -24,34 +24,32 @@ class Address:
 
 class Client:
     def __init__(self, ip, port, video_port, audio_port, username, server_address: Address):
+        self.user = User(username, ip, 0, port, video_port, audio_port)
         self.server_address = server_address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.audioInterface = AudioInterface()
         self.socket.settimeout(90)
-        self.tcp_port = ""
-        self.user = User(username, ip, self.tcp_port, port, video_port, audio_port)
     
     def connect(self, address: Address):
         try:
             self.socket.connect((address.ip, int(address.port)))
-            self.user.tcp_port = self.socket.getsockname()[1]
             Logger.debug(f"Successful connection to: {address}")
         except socket.error as e:
             Logger.debug(f"Unsuccessful connection to: {address}")
             Logger.debug(e)
 
     def find_user(self, user: User):
-        message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'port': '' , 'video_port': '', 'audio_port': '', 'destination_ip': '', 'destination_port': '' }
+        message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'server_port': '', 'port': '' , 'video_port': '', 'audio_port': '', 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
     def signin(self):
-        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'tcp_port': self.tcp_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
+        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'server_port': '', 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
     def logout(self):
-        message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
+        message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'server_port': '', 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
@@ -68,8 +66,8 @@ class Client:
             if(message.message.startswith("Call accepted")):
                 caller = message.message.split(",")
                 #threads do video_call e audio_call
-                self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6]))
-                threading.Thread(target=self.export_video_call, args=(caller[3],caller[5],)).start()
+                self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
+                threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
                 threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                 print("Começou a chamada")
             if(message.message.startswith("Calling")):
@@ -77,16 +75,16 @@ class Client:
                 answer = int(input("1 for yes ou 0 for not: "))
                 caller = message.message.split(",")
                 if(answer > 0):
-                    message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
+                    message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
                     self.send_msg(json.dumps(message2), self.server_address)
                     #threads do video_call e audio_call
-                    self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6]))
-                    threading.Thread(target=self.export_video_call, args=(caller[3],caller[5],)).start()
+                    self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
+                    threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
                     threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                     
                     print("Começou a chamada")
                 else:
-                    message2 = { 'username': self.user.username, 'op': 6, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
+                    message2 = { 'username': self.user.username, 'op': 6, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
                     self.send_msg(json.dumps(message2), self.server_address)
 
     def send_msg(self, request: str, address: Address):
@@ -94,7 +92,7 @@ class Client:
         # Logger.debug(f"Message sent to {address}: {request}")
         
     def make_a_call(self, address: Address,):
-        message = { 'username': self.user.username, 'op': 4, 'ip': self.user.ip, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': address.ip, 'destination_port': address.port }
+        message = { 'username': self.user.username, 'op': 4, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': address.ip, 'destination_port': address.port }
         self.send_msg(json.dumps(message), self.server_address)
     
     def audio_call(self, user: User):
@@ -172,14 +170,14 @@ while True:
     if(op == 1):
         username = input("Insert user's username: ")
         ip = input("Insert user's ip: ")
-        client.find_user(User(username, ip, "0", "0", "0"))
+        client.find_user(User(username, ip, "0", "0", "0", "0"))
     elif(op == 2):
         client.signin()
     elif(op == 3):
         client.logout()
     elif(op == 4):
         dest_IP = input("Insert the IP of who you want to call: ")
-        dest_port = input("Insert the Port of who you want to call: ")
+        dest_port = input("Insert the Server Port of who you want to call: ")
         #ask if patner wants to connect
         client.make_a_call(Address(dest_IP, dest_port))
     else:

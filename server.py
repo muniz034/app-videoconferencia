@@ -41,11 +41,11 @@ class Controller:
         else:
             return (-1, None)
         
-    def insert_user(self, username, tcp_port, ip, port, video_port, audio_port):
+    def insert_user(self, username, ip, server_port, port, video_port, audio_port):
         # Logger.debug(f"Call to method insert_user: username({username}) ip({ip}) port({port})")
         user_existe = self.user_exists(username, ip)
         if not user_existe:
-            self.users.append(User(username, ip, tcp_port, port, video_port, audio_port))
+            self.users.append(User(username, ip, server_port, port, video_port, audio_port))
             return 1
         else:
             return -1
@@ -66,10 +66,10 @@ class Controller:
     def print_table(self):
         if(len(self.users) == 0): return
         
-        data = [["IP", "Username", "TCP Port", "UDP Port",  "Video_Port", "Audio_Port"]]
+        data = [["IP", "Username", "Server_Port", "Port",  "Video_Port", "Audio_Port"]]
 
         for i in range(len(self.users)):
-            data.append([self.users[i].ip, self.users[i].username, self.users[i].tcp_port, self.users[i].port, self.users[i].video_port, self.users[i].audio_port])
+            data.append([self.users[i].ip, self.users[i].username, self.users[i].server_port, self.users[i].port, self.users[i].video_port, self.users[i].audio_port])
 
         columns_widths = [max(len(str(item)) for item in column) for column in zip(*data)]
 
@@ -99,13 +99,13 @@ class Server:
         self.client_table[f"{client_address[0]}:{client_address[1]}"] = client_socket
         return client_socket, client_address
     
-    def process_msg(self, message: Request) -> Tuple[int, str]:
+    def process_msg(self, message: Request, address: Address) -> Tuple[int, str]:
         if(message.op is Operation.FIND_USER):
             index, result = self.controller.find_user(message.username, message.ip)
             return Response(json.dumps({ 'message': str(result) })) if index > -1 else Response(json.dumps({ 'message': "User not found" }))
 
         if(message.op is Operation.INSERT_USER):
-            result = self.controller.insert_user(message.username, message.ip, message.tcp_port, message.port, message.video_port, message.audio_port)
+            result = self.controller.insert_user(message.username, message.ip, address.port, message.port, message.video_port, message.audio_port)
             return Response(json.dumps({ 'message': "User created" })) if result == 1 else Response(json.dumps({ 'message': "User already exists" }))
 
         if(message.op is Operation.REMOVE_USER):
@@ -114,15 +114,15 @@ class Server:
         
         if(message.op is Operation.MAKE_A_CALL):
             Logger.debug(f"message: {message.__str__()}")
-            self.send_msg(Response(json.dumps({ 'message':"Calling,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.destination_port))#send message to destination
+            self.send_msg(Response(json.dumps({ 'message':"Calling,{message.username},{message.op},{message.ip},{address.port},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.server_port))#send message to destination
             return Response(json.dumps({ 'message': "Ringing" }))
         
         if(message.op is Operation.ACCEPT_CALL):
-            self.send_msg(Response(json.dumps({ 'message':"Call accepted,{message.username},{message.op},{message.ip},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.destination_port))#send message to origin
+            self.send_msg(Response(json.dumps({ 'message':"Call accepted,{message.username},{message.op},{message.ip},{address.port},{message.port},{message.video_port},{message.audio_port}"})), Address(message.destination_ip,message.server_port))#send message to origin
             return Response(json.dumps({ 'message': "Call accepted" }))
         
         if(message.op is Operation.DENY_CALL):
-            self.send_msg(Response(json.dumps({ 'message':"Call denied"})),Address(message.destination_ip,message.destination_port))#send message to origin
+            self.send_msg(Response(json.dumps({ 'message':"Call denied"})),Address(message.destination_ip,message.server_port))#send message to origin
             return Response(json.dumps({ 'message': "Call denied" }))
 #Quebra mensagem para saber a operação desejada
     def parse_msg(self, data) -> Tuple[int, Request]:
@@ -134,7 +134,7 @@ class Server:
         except ValueError as e:
             return (-1, "Op code not found")
         
-        return (1, Request(op, message["ip"], message["tcp_port"], message["port"], message["username"], message["video_port"], message["audio_port"], message["destination_ip"], message["destination_port"]))
+        return (1, Request(op, message["ip"], message["server_port"], message["port"], message["username"], message["video_port"], message["audio_port"], message["destination_ip"], message["destination_port"]))
     
     def receive_msg(self, address: Address):
         client_socket = self.client_table.get(str(address))
@@ -145,7 +145,7 @@ class Server:
             if(not ok): return self.send_msg(message, address)
             # Logger.debug(f"Message received from {address}: {message}")
             
-            return self.send_msg(self.process_msg(message), address)
+            return self.send_msg(self.process_msg(message, address), address)
 
     def send_msg(self, response: Response, address: Address):
         client_socket = self.client_table.get(address.__str__())
