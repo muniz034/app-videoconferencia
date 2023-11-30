@@ -76,7 +76,6 @@ class Client:
                 print("Do you accept the call?")
                 answer = int(input("1 for yes ou 0 for no: "))
                 caller = message.message.split(",")
-                print(message.message)
                 if(answer > 0):
                     message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
                     self.send_msg(json.dumps(message2), self.server_address)
@@ -132,7 +131,7 @@ class Client:
 
         # Create a UDP socket
         import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        import_udp_socket.bind(Address(self.user.ip,self.user.video_port))
+        import_udp_socket.bind((self.user.ip,self.user.video_port))
         import_udp_socket.listen()
         
         try:
