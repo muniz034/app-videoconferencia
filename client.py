@@ -100,7 +100,6 @@ class Client:
         threading.Thread(target=self.audioInterface.send_audio, args=(user,)).start()
     
     def export_video_call(self,dest_IP,dest_port):
-        sNumber = 0
         # Initialize video capture using OpenCV
         cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
 
