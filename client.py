@@ -138,8 +138,7 @@ class Client:
             print("If you want to close the connection type \"q\" on the window")
             while True:
                 # Recieve packet
-                
-                packet = import_udp_socket.recv()
+                packet = import_udp_socket.recv(1000000)
                 size = struct.unpack("Q", packet[:8])[0]
                 packet = packet[8:]
 
