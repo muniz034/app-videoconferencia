@@ -63,23 +63,26 @@ class Client:
         if data: 
             ok, message = self.parse_msg(data)
             Logger.debug(f"Message received from {address}: {message.message}")
+            if(message.message == "Ringing"):
+                self.receive_msg(self.server_address)
             if(message.message.startswith("Call accepted")):
                 caller = message.message.split(",")
                 #threads do video_call e audio_call
                 self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
                 threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
-                threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
+                #threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                 print("Começou a chamada")
             if(message.message.startswith("Calling")):
                 print("Do you accept the call?")
-                answer = int(input("1 for yes ou 0 for not: "))
+                answer = int(input("1 for yes ou 0 for no: "))
                 caller = message.message.split(",")
+                print(message.message)
                 if(answer > 0):
                     message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
                     self.send_msg(json.dumps(message2), self.server_address)
                     #threads do video_call e audio_call
                     self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
-                    threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
+                    #threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
                     threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
                     
                     print("Começou a chamada")
@@ -94,6 +97,7 @@ class Client:
     def make_a_call(self, address: Address,):
         message = { 'username': self.user.username, 'op': 4, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': address.ip, 'destination_port': address.port }
         self.send_msg(json.dumps(message), self.server_address)
+        self.receive_msg(self.server_address)
     
     def audio_call(self, user: User):
         threading.Thread(target=self.audioInterface.receive_audio).start()
@@ -164,7 +168,7 @@ client = Client("127.0.0.1", port, video_port, audio_port, username, Address("12
 client.connect(client.server_address)
 
 while True:
-    Logger.debug("1 - Find user | 2 - Signin | 3 - Logout | 4 - Make a Call")
+    Logger.debug("1 - Find user | 2 - Signin | 3 - Logout | 4 - Make a Call | 7 - Listen")
     op = int(input("Insert a op code: "))
 
     if(op == 1):
@@ -180,5 +184,7 @@ while True:
         dest_port = input("Insert the Server Port of who you want to call: ")
         #ask if patner wants to connect
         client.make_a_call(Address(dest_IP, dest_port))
+    elif(op == 7):
+        client.receive_msg(client.server_address)
     else:
         pass
