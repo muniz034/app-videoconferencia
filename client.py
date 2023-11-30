@@ -99,6 +99,7 @@ class Client:
         self.receive_msg(self.server_address)
     
     def audio_call(self, user: User):
+        self.audioInterface.start_socket(user)
         threading.Thread(target=self.audioInterface.receive_audio).start()
         threading.Thread(target=self.audioInterface.send_audio, args=(user,)).start()
     
@@ -131,7 +132,7 @@ class Client:
 
         # Create a UDP socket
         import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        import_udp_socket.bind((self.user.ip,self.user.video_port))
+        import_udp_socket.bind((self.user.ip, self.user.video_port))
         import_udp_socket.listen()
         
         try:
