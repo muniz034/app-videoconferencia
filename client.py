@@ -141,11 +141,11 @@ class Client:
             print("If you want to close the connection type \"q\" on the window")
             while True:
                 # Receive the size of the data
-                size, addr = import_udp_socket.recvfrom(4)
+                size, addr = import_udp_socket.recvfrom(1000000000)
                 size = struct.unpack("!I", size)[0]
 
                 # Receive the actual data
-                packet, addr = import_udp_socket.recvfrom(size)
+                packet, addr = import_udp_socket.recvfrom(size + 1000000000)
                 # Descompact packet
                 frame = pickle.loads(packet)
 

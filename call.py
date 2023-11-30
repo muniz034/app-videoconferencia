@@ -14,7 +14,7 @@ class AudioInterface:
     
     def start_socket(self, user: User):
         self.audio_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.audio_socket.bind((user.ip, user.audio_port))
+        self.audio_socket.bind((user.ip, int(user.audio_port)))
     
     def receive_audio(self):
         output_stream = self.audio.open(format=pyaudio.paInt16, channels=self.CHANNELS, rate=self.RATE, output=True, frames_per_buffer=self.CHUNK)
@@ -35,7 +35,7 @@ class AudioInterface:
             try:
                 message = input_stream.read(1024)
                 # print(f"Sending message to: {dest.audio_port}")
-                self.audio_socket.sendto(message, (dest.ip, dest.audio_port))
+                self.audio_socket.sendto(message, (dest.ip, int(dest.audio_port)))
             except KeyboardInterrupt:
                 input_stream.close()
                 break
