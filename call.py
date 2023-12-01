@@ -50,6 +50,7 @@ class AudioInterface:
 
 class VideoInterface:
     def start_streaming_server(self, user: User):
+        print("Press 'q' to close the window")
         server = vidstream.StreamingServer(user.ip, int(user.video_port))
         server.start_server()
         while True:
@@ -57,6 +58,12 @@ class VideoInterface:
 
     def start_camera(self, dest: User):
         client = vidstream.CameraClient(dest.ip, int(dest.video_port))
+        client.start_stream()
+        while True:
+            pass
+        
+    def start_screen(self, dest: User):
+        client = vidstream.ScreenShareClient(dest.ip, int(dest.video_port))
         client.start_stream()
         while True:
             pass

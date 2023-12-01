@@ -95,7 +95,12 @@ class Client:
     def start_call(self, caller: User):
         # Logger.debug(f"CALL STARTED WITH {caller.username}")
         self.audio_call(self.user, caller)
-        # self.video_call(self.user, dest)
+        self.video_call(self.user, caller)
+        
+    def start_call2(self, caller: User):
+        # Logger.debug(f"CALL STARTED WITH {caller.username}")
+        self.audio_call(self.user, caller)
+        self.video_call2(self.user, caller)
 
     def receive_call(self, caller: User):
         Logger.debug(f"Call from {caller.username}. Do you accept the call?")
@@ -114,7 +119,7 @@ class Client:
             )
 
             self.receive_msg(self.server_address)
-            self.start_call(caller)
+            self.start_call2(caller)
         else:
             self.send_msg(json.dumps(
                 {
@@ -166,6 +171,10 @@ class Client:
 
     def video_call(self, user: User, dest: User):
         threading.Thread(target=self.videoInterface.start_camera, args=(user,)).start()
+        threading.Thread(target=self.videoInterface.start_streaming_server, args=(dest,)).start()
+        
+    def video_call2(self, user: User, dest: User):
+        threading.Thread(target=self.videoInterface.start_screen, args=(user,)).start()
         threading.Thread(target=self.videoInterface.start_streaming_server, args=(dest,)).start()
 
 username = input("Insert an username: ")
