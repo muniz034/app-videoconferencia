@@ -1,5 +1,7 @@
 import socket
+from time import sleep
 import pyaudio
+import vidstream
 
 from user import User
 
@@ -18,6 +20,7 @@ class AudioInterface:
     
     def receive_audio(self):
         output_stream = self.audio.open(format=pyaudio.paInt16, channels=self.CHANNELS, rate=self.RATE, output=True, frames_per_buffer=self.CHUNK)
+        self.output_stream = output_stream
 
         while True:
             try:
@@ -30,6 +33,7 @@ class AudioInterface:
 
     def send_audio(self, dest: User):
         input_stream = self.audio.open(format=pyaudio.paInt16, channels=self.CHANNELS, rate=self.RATE, input=True, frames_per_buffer=self.CHUNK)
+        self.input_stream = input_stream
 
         while True:
             try:
@@ -39,3 +43,20 @@ class AudioInterface:
             except KeyboardInterrupt:
                 input_stream.close()
                 break
+
+    def stop_stream(self):
+        self.input_stream.close()
+        self.output_stream.close()
+
+class VideoInterface:
+    def start_streaming_server(self, user: User):
+        server = vidstream.StreamingServer(user.ip, int(user.video_port))
+        server.start_server()
+        while True:
+            pass
+
+    def start_camera(self, dest: User):
+        client = vidstream.CameraClient(dest.ip, int(dest.video_port))
+        client.start_stream()
+        while True:
+            pass

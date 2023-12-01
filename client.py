@@ -1,7 +1,7 @@
 import socket
 import threading
 import json
-from call import AudioInterface
+import call
 import cv2
 import struct
 import time
@@ -25,11 +25,12 @@ class Address:
 
 class Client:
     def __init__(self, ip, port, video_port, audio_port, username, server_address: Address):
-        self.user = User(username, ip, 0, port, video_port, audio_port)
+        self.user = User(username, ip, 0, video_port, audio_port)
         self.server_address = server_address
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.audioInterface = AudioInterface()
-        self.socket.settimeout(90)
+        self.audioInterface = call.AudioInterface()
+        self.videoInterface = call.VideoInterface()
+        self.socket.settimeout(900)
     
     def connect(self, address: Address):
         try:
@@ -40,19 +41,93 @@ class Client:
             Logger.debug(e)
 
     def find_user(self, user: User):
-        message = { 'username': user.username, 'op': 1, 'ip': user.ip, 'server_port': '', 'port': '' , 'video_port': '', 'audio_port': '', 'destination_ip': '', 'destination_port': '' }
+        message = { 
+            'username': user.username, 
+            'op': 1, 
+            'video_port': '', 
+            'audio_port': '', 
+            'dest_username': '', 
+            'dest_ip': user.ip 
+        }
+
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
     def signin(self):
-        message = { 'username': self.user.username, 'op': 2, 'ip': self.user.ip, 'server_port': '', 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
+        message = { 
+            'username': self.user.username, 
+            'op': 2, 
+            'video_port': self.user.video_port, 
+            'audio_port': self.user.audio_port, 
+            'dest_username': '', 
+            'dest_ip': '' 
+        }
+
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
 
     def logout(self):
-        message = { 'username': self.user.username, 'op': 3, 'ip': self.user.ip, 'server_port': '', 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': '', 'destination_port': '' }
+        message = { 
+            'username': self.user.username, 
+            'op': 3, 
+            'video_port': self.user.video_port, 
+            'audio_port': self.user.audio_port, 
+            'dest_username': '', 
+            'dest_ip': '' 
+        }
+
         self.send_msg(json.dumps(message), self.server_address)
         self.receive_msg(self.server_address)
+
+    def send_call(self, dest_username, dest_ip):
+        message = { 
+            'username': self.user.username, 
+            'op': 4, 
+            'video_port': '', 
+            'audio_port': '',
+            'dest_username': dest_username, 
+            'dest_ip': dest_ip 
+        }
+
+        self.send_msg(json.dumps(message), self.server_address)
+        self.receive_msg(self.server_address)
+
+    def start_call(self, caller: User):
+        # Logger.debug(f"CALL STARTED WITH {caller.username}")
+        self.audio_call(self.user, caller)
+        # self.video_call(self.user, dest)
+
+    def receive_call(self, caller: User):
+        Logger.debug(f"Call from {caller.username}. Do you accept the call?")
+        answer = int(input("1 (YES) | 0 (NO): "))
+        if(answer == 1):
+            self.send_msg(json.dumps(
+                { 
+                    'username': self.user.username, 
+                    'op': 5, 
+                    'video_port': '', 
+                    'audio_port': '',
+                    'dest_username': caller.username, 
+                    'dest_ip': caller.ip 
+                }), 
+                self.server_address
+            )
+
+            self.receive_msg(self.server_address)
+            self.start_call(caller)
+        else:
+            self.send_msg(json.dumps(
+                {
+                    'username': self.user.username,
+                    'op': 6, 
+                    'video_port': '', 
+                    'audio_port': '',
+                    'dest_username': caller.username, 
+                    'dest_ip': caller.ip 
+                }), 
+                self.server_address
+            )
+            self.receive_msg(self.server_address)
 
     def parse_msg(self, data) -> Tuple[int, Response]:
         message = json.loads(data)
@@ -63,121 +138,41 @@ class Client:
 
         if data: 
             ok, message = self.parse_msg(data)
-            Logger.debug(f"Message received from {address}: {message.message}")
             if(message.message == "Ringing"):
                 self.receive_msg(self.server_address)
-            if(message.message.startswith("Call accepted")):
-                caller = message.message.split(",")
-                #threads do video_call e audio_call
-                self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
-                threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
-                #threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
-                print("Começou a chamada")
-            if(message.message.startswith("Calling")):
-                print("Do you accept the call?")
-                answer = int(input("1 for yes ou 0 for no: "))
-                caller = message.message.split(",")
-                if(answer > 0):
-                    message2 = { 'username': self.user.username, 'op': 5, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
-                    self.send_msg(json.dumps(message2), self.server_address)
-                    #threads do video_call e audio_call
-                    self.audio_call(User(caller[1],caller[3],caller[4],caller[5],caller[6],caller[7]))
-                    #threading.Thread(target=self.export_video_call, args=(caller[3],caller[6],)).start()
-                    threading.Thread(target=self.import_video_call, args=(caller[1],)).start()
-                    
-                    print("Começou a chamada")
-                else:
-                    message2 = { 'username': self.user.username, 'op': 6, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': caller[3], 'destination_port': caller[4] }
-                    self.send_msg(json.dumps(message2), self.server_address)
+            elif(message.message.startswith("Call from")):
+                info = message.message.split(",")
+                caller = User(info[1], info[2], info[3], info[4], info[5])
+                self.receive_call(caller)
+            elif(message.message.startswith("Call accepted")):
+                info = message.message.split(",")
+                dest = User(info[1], info[2], info[3], info[4], info[5])
+                self.start_call(dest)
+            else:
+                Logger.debug(f"Message received from {address}: {message.message}")
+
+    def wait_for_msg(self):
+        while True:
+            self.receive_msg(self.server_address)
 
     def send_msg(self, request: str, address: Address):
         self.socket.send(request.encode("utf-8"))
         # Logger.debug(f"Message sent to {address}: {request}")
-        
-    def make_a_call(self, address: Address,):
-        message = { 'username': self.user.username, 'op': 4, 'ip': self.user.ip, 'server_port': self.user.server_port, 'port': self.user.port, 'video_port': self.user.video_port, 'audio_port': self.user.audio_port, 'destination_ip': address.ip, 'destination_port': address.port }
-        self.send_msg(json.dumps(message), self.server_address)
-        self.receive_msg(self.server_address)
     
-    def audio_call(self, user: User):
+    def audio_call(self, user: User, dest: User):
         self.audioInterface.start_socket(user)
         threading.Thread(target=self.audioInterface.receive_audio).start()
-        threading.Thread(target=self.audioInterface.send_audio, args=(user,)).start()
-    
-    def export_video_call(self,dest_IP,dest_port):
-        # Initialize video capture using OpenCV
-        #cap = cv2.VideoCapture(0)  # Use 0 for the default webcam, change if necessary
+        threading.Thread(target=self.audioInterface.send_audio, args=(dest,)).start()
 
-        #Create client to capture and send frames/packets 
-        camera = vidstream.CameraClient(dest_IP,int(dest_port))
-        # Create a UDP socket
-        #export_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            #print("If you want to close the connection type \"q\" on the window")
-            camera.start_stream()
-            while True:
-                # Capture frame-by-frame
-                #ret, frame = cap.read()
-                ancora = 0
-
-                # Create a packet
-                #packet_bytes = pickle.dumps(frame)
-
-                # Send the packet over UDP
-                #export_udp_socket.sendto(packet_bytes, (dest_IP, int(dest_port)))
-        except KeyboardInterrupt:
-            print("Stopping...")
-        finally:
-            print("Ending...")
-            camera.stop_stream()
-            
-            # Release the video capture, close UDP socket, and destroy OpenCV windows
-            #cap.release()
-            cv2.destroyAllWindows()
-            #export_udp_socket.close()
-            
-    def import_video_call(self,username):
-        #Create window
-        cv2.namedWindow(username, cv2.WINDOW_NORMAL)
-        # Create a UDP socket
-        #import_udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        #import_udp_socket.bind((self.user.ip, self.user.video_port))
-        
-        # Create a sever to recieve the packets/frames
-        receiver = vidstream.StreamingServer(self.user.ip, int(self.user.video_port))
-        try:
-            print("If you want to close the connection type \"q\" on the window")
-            receiver.start_server()
-            while True:
-
-                # Receive the packet
-                #packet, addr = import_udp_socket.recvfrom(1)
-                # Descompact packet
-                #frame = pickle.loads(packet)
-
-                # Display the frame
-                #cv2.imshow(username, frame)
-                
-                #Condition to break
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-
-        except KeyboardInterrupt:
-            print("Stopping...")
-        finally:
-            print("Ending...")
-            receiver.stop_server()
-            
-            # Release the video capture, close UDP socket, and destroy OpenCV windows
-            cv2.destroyAllWindows()
-            #import_udp_socket.close()
+    def video_call(self, user: User, dest: User):
+        threading.Thread(target=self.videoInterface.start_camera, args=(user,)).start()
+        threading.Thread(target=self.videoInterface.start_streaming_server, args=(dest,)).start()
 
 username = input("Insert an username: ")
-port = int(input("Insert the desired port: "))
 video_port = int(input("Insert the desired port for video: "))
 audio_port = int(input("Insert the desired port for audio: "))
 
-client = Client("127.0.0.1", port, video_port, audio_port, username, Address("127.0.0.1", "8080"))
+client = Client("127.0.0.1", 0, video_port, audio_port, username, Address("127.0.0.1", "8080"))
 client.connect(client.server_address)
 
 while True:
@@ -187,16 +182,15 @@ while True:
     if(op == 1):
         username = input("Insert user's username: ")
         ip = input("Insert user's ip: ")
-        client.find_user(User(username, ip, "0", "0", "0", "0"))
+        client.find_user(User(username, ip, "0", "0", "0"))
     elif(op == 2):
         client.signin()
     elif(op == 3):
         client.logout()
     elif(op == 4):
-        dest_IP = input("Insert the IP of who you want to call: ")
-        dest_port = input("Insert the Server Port of who you want to call: ")
-        #ask if patner wants to connect
-        client.make_a_call(Address(dest_IP, dest_port))
+        dest_username = input("Insert the username of who you want to call: ")
+        dest_ip = input("Insert the IP of who you want to call: ")
+        client.send_call(dest_username, dest_ip)
     elif(op == 7):
         client.receive_msg(client.server_address)
     else:
