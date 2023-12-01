@@ -1,3 +1,4 @@
+talvez tenha que executar pip install Pillow e outros dependências que seu pc não tiver(vidstream,pyAudio,etc)
 Run server.py
 Run 2 client.py
 Signin the two client(op 2)
